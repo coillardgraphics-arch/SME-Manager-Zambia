@@ -2,7 +2,7 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
 const supabaseUrl = 'https://vfwstxeupbqasjskbxrh.supabase.co'
-const supabaseKey = 'sb_publishable_R37OWh6pGdZRVkZRxMTa3g_2k0ITHy5' // Use your real key
+const supabaseKey = 'sb_publishable_R370Wh5pGdZRvKZrx1Ta8g_2kQIThyS' // Use your real key
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 async function checkUser() {
