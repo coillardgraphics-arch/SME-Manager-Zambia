@@ -1,90 +1,52 @@
 // js/dashboard.js
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-const supabaseUrl = 'https://vfwsixeupbqasjskbxrh.supabase.co'
-const supabaseKey = 'sb_publishable_R370Wh5pGdZRvKZrx1Ta8g_2kQIThyS'
+const supabaseUrl = 'https://vfwstxeupbqasjskbxrh.supabase.co'
+const supabaseKey = 'sb_publishable_R37OWh6pGdZRVkZRxMTa3g_2k0ITHy5' // Use your real key
 const supabase = createClient(supabaseUrl, supabaseKey)
 
-let userId = null
-
-// Check if user is logged in
 async function checkUser() {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
-        window.location.href = 'login.html'
+    const { data: { session }, error } = await supabase.auth.getSession();
+
+    if (error || !session) {
+        // If no session, send them back to login
+        console.log("No active session found.");
+        window.location.href = 'login.html';
     } else {
-        userId = session.user.id
-        loadSummary()
+        // User is logged in, now load the data
+        console.log("User logged in:", session.user.id);
+        loadSummary(session.user.id);
+        setupEventListeners(session.user.id);
     }
 }
 
-checkUser()
+// Separate function for listeners so they only activate AFTER login check
+function setupEventListeners(userId) {
+    const saleForm = document.getElementById('sale-form');
+    if (saleForm) {
+        saleForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const item = document.getElementById('item').value;
+            const quantity = document.getElementById('quantity').value;
+            const amount = parseFloat(document.getElementById('amount').value);
 
-// ADD SALE
-const saleForm = document.getElementById('sale-form')
-if (saleForm) {
-    saleForm.addEventListener('submit', async (e) => {
-        e.preventDefault()
-        const item = document.getElementById('item').value
-        const quantity = parseFloat(document.getElementById('quantity').value)
-        const amount = parseFloat(document.getElementById('amount').value)
+            const { error } = await supabase
+                .from('sales')
+                .insert([{ user_id: userId, item_name: item, quantity, amount, date: new Date() }]);
 
-        const { error } = await supabase
-            .from('sales')
-            .insert([{ user_id: userId, item_name: item, quantity, amount, date: new Date() }])
-
-        if (error) {
-            alert('Error adding sale: ' + error.message)
-        } else {
-            saleForm.reset()
-            loadSummary()
-        }
-    })
-}
-
-// ADD EXPENSE
-const expenseForm = document.getElementById('expense-form')
-if (expenseForm) {
-    expenseForm.addEventListener('submit', async (e) => {
-        e.preventDefault()
-        const category = document.getElementById('category').value
-        const amount = parseFloat(document.getElementById('expense-amount').value)
-
-        const { error } = await supabase
-            .from('expenses')
-            .insert([{ user_id: userId, category, amount, date: new Date() }])
-
-        if (error) {
-            alert('Error adding expense: ' + error.message)
-        } else {
-            expenseForm.reset()
-            loadSummary()
-        }
-    })
-}
-
-// LOAD SUMMARY
-async function loadSummary() {
-    const { data: sales, error: salesError } = await supabase
-        .from('sales')
-        .select('*')
-        .eq('user_id', userId)
-
-    const { data: expenses, error: expenseError } = await supabase
-        .from('expenses')
-        .select('*')
-        .eq('user_id', userId)
-
-    if (salesError || expenseError) {
-        console.log('Error loading summary', salesError, expenseError)
-        return
+            if (error) alert('Error: ' + error.message);
+            else {
+                saleForm.reset();
+                loadSummary(userId);
+            }
+        });
     }
-
-    const totalSales = sales.reduce((sum, s) => sum + parseFloat(s.amount), 0)
-    const totalExpenses = expenses.reduce((sum, e) => sum + parseFloat(e.amount), 0)
-    const profit = totalSales - totalExpenses
-
-    document.getElementById('total-sales').textContent = totalSales.toFixed(2)
-    document.getElementById('total-expenses').textContent = totalExpenses.toFixed(2)
-    document.getElementById('profit').textContent = profit.toFixed(2)
 }
+
+async function loadSummary(userId) {
+    // Your existing logic to fetch and display totals
+    // Ensure you use .eq('user_id', userId) in your queries!
+}
+
+// Start the check
+checkUser();
